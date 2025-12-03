@@ -76,14 +76,14 @@ const games = [
     id: "slave",
     name: "ไพ่สลาฟ",
     nameEn: "Slave / President",
-    description: "เกมไพ่ทิ้งยอดฮิต ใครทิ้งไพ่หมดมือก่อนชนะ ผู้แพ้ต้องเป็นทาส!",
+    description: "ทิ้งไพ่ให้หมดมือก่อนชนะ ใครทีหลังต้องเป็นทาส!",
     players: "2-4 คน",
     duration: "10-20 นาที",
     difficulty: "ง่าย",
     icon: "♠️",
-    color: "from-gray-700 to-gray-900",
+    color: "from-blue-500 to-blue-700",
     href: "/games/slave",
-    status: "coming_soon",
+    status: "available",
   },
 ];
 

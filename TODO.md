@@ -277,12 +277,22 @@ card-game-p2p-nextjs/
 - [x] Fold, Check, Call, Raise, All-in actions
 - [x] Hand evaluation (Royal Flush to High Card)
 
-### 🔜 Next: Dummy / Slave
+### ✅ Completed - Slave (ไพ่สลาฟ)
+
+- [x] Create Slave game types (`slave.types.ts`)
+- [x] Create Slave game rules/logic (`SlaveGame.ts`)
+- [x] Create Slave store (`slaveStore.ts`)
+- [x] Create Slave UI components (`SlaveView.tsx`, `SlaveTableV2.tsx`)
+- [x] Create Slave page route (`/games/slave`)
+- [x] P2P game state synchronization
+- [x] Single, Pair, Triple, Quadruple, Straight plays
+- [x] President/Slave ranking system
+
+### 🔜 Next: Dummy
 
 เกมต่อไปที่สามารถทำได้:
 
 - **ดัมมี่** - ปานกลาง
-- **สลาฟ** - ง่าย
 
 ---
 
