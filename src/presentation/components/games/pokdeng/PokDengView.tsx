@@ -1,6 +1,6 @@
 "use client";
 
-import { PokDengTable } from "@/src/presentation/components/games/pokdeng/PokDengTable";
+import { PokDengTableV2 } from "@/src/presentation/components/games/pokdeng/PokDengTableV2";
 import { GameLobby } from "@/src/presentation/components/organisms/GameLobby";
 import { useRoomStore } from "@/src/presentation/stores/roomStore";
 import { useState } from "react";
@@ -18,13 +18,9 @@ export function PokDengView() {
     setGameStarted(true);
   };
 
-  // Show game table when game has started
+  // Show game table when game has started (full screen)
   if (gameStarted && room?.status === "starting") {
-    return (
-      <div className="py-6">
-        <PokDengTable />
-      </div>
-    );
+    return <PokDengTableV2 />;
   }
 
   // Show lobby
