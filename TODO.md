@@ -288,11 +288,27 @@ card-game-p2p-nextjs/
 - [x] Single, Pair, Triple, Quadruple, Straight plays
 - [x] President/Slave ranking system
 
-### 🔜 Next: Dummy
+### ✅ Completed - Dummy (ดัมมี่)
 
-เกมต่อไปที่สามารถทำได้:
+- [x] Create Dummy game types (`dummy.types.ts`)
+- [x] Create Dummy game rules/logic (`DummyGame.ts`)
+- [x] Create Dummy store (`dummyStore.ts`)
+- [x] Create Dummy UI components (`DummyView.tsx`, `DummyTableV2.tsx`)
+- [x] Create Dummy page route (`/games/dummy`)
+- [x] P2P game state synchronization
+- [x] Draw, Discard, Meld, Knock actions
+- [x] Set (ตอง) and Run (เรียง) validation
 
-- **ดัมมี่** - ปานกลาง
+### 🎉 Phase 1 Complete!
+
+เกมที่พร้อมเล่น:
+
+- ✅ ป๊อกเด้ง
+- ✅ ไพ่แคง
+- ✅ โป๊กเกอร์
+- ✅ แบล็คแจ็ค
+- ✅ ไพ่สลาฟ
+- ✅ ดัมมี่
 
 ---
 
