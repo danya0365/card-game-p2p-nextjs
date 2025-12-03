@@ -19,47 +19,53 @@
 
 ### 🏗️ Foundation (Priority: HIGH)
 
-- [x] ~~Project setup with Next.js~~
-- [ ] **MainLayout** - Header, Footer, Theme Toggle
-- [ ] **UserStore** - Zustand persist with localforage (local user profile)
-- [ ] **ThemeProvider** - Dark mode support
+- [x] Project setup with Next.js
+- [x] **MainLayout** - Header, Footer, Theme Toggle
+- [x] **UserStore** - Zustand persist with localforage (local user profile)
+- [x] **ThemeProvider** - Dark mode support
+- [x] **Landing Page** - Hero, game cards, features
+- [x] **Games Hub Page** - All games with info
+- [x] **Profile Page** - User profile with stats
 
 ### 📄 Pages
 
-| Page        | Route                        | Description            |
-| ----------- | ---------------------------- | ---------------------- |
-| Landing     | `/`                          | หน้าแรก แนะนำเว็บ      |
-| Games Hub   | `/games`                     | หน้ารวมเกมทั้งหมด      |
-| Profile     | `/profile`                   | โปรไฟล์ผู้เล่น (local) |
-| Slave Game  | `/games/slave`               | ไพ่สลาฟ                |
-| Slave Lobby | `/games/slave/lobby`         | ห้องรอเล่นไพ่สลาฟ      |
-| Slave Room  | `/games/slave/room/[roomId]` | ห้องเล่นไพ่สลาฟ        |
-| Pok Deng    | `/games/pokdeng`             | ไพ่ป๊อกเดง             |
-| Kang        | `/games/kang`                | ไพ่แคง                 |
-| Poker       | `/games/poker`               | โปกเกอร์               |
-| Thai Dummy  | `/games/dummy`               | ไทยดัมมี่              |
-| Blackjack   | `/games/blackjack`           | แบล็คแจ็ค              |
+| Page       | Route                         | Description            | Status |
+| ---------- | ----------------------------- | ---------------------- | ------ |
+| Landing    | `/`                           | หน้าแรก แนะนำเว็บ      | ✅     |
+| Games Hub  | `/games`                      | หน้ารวมเกมทั้งหมด      | ✅     |
+| Profile    | `/profile`                    | โปรไฟล์ผู้เล่น (local) | ✅     |
+| Pok Deng   | `/games/pokdeng`              | ไพ่ป๊อกเดง             | 🔄     |
+| Kang       | `/games/kang`                 | ไพ่แคง                 | ⏳     |
+| Blackjack  | `/games/blackjack`            | แบล็คแจ็ค              | ⏳     |
+| Poker      | `/games/poker`                | โปกเกอร์               | ⏳     |
+| Thai Dummy | `/games/dummy`                | ไทยดัมมี่              | ⏳     |
+| Slave Game | `/games/slave`                | ไพ่สลาฟ                | ⏳     |
+| Game Lobby | `/games/[game]/lobby`         | ห้องรอเล่น (reusable)  | 🔄     |
+| Game Room  | `/games/[game]/room/[roomId]` | ห้องเล่นเกม (reusable) | 🔄     |
 
-### 🎮 Card Games List
+### 🎮 Card Games List (Priority Order)
 
-1. **ไพ่สลาฟ (Slave)** - เกมไพ่ทิ้ง 2-4 คน
-2. **ไพ่ป๊อกเดง (Pok Deng)** - เกมไพ่เปรียบ 2-9 คน
-3. **ไพ่แคง (Kang)** - เกมไพ่ไทย 2-6 คน
+1. **ไพ่ป๊อกเดง (Pok Deng)** - เกมไพ่เปรียบ 2-9 คน ⭐ Priority 1
+2. **ไพ่แคง (Kang)** - เกมไพ่ไทย 2-6 คน
+3. **แบล็คแจ็ค (Blackjack)** - เกมไพ่ 21 1-7 คน
 4. **โปกเกอร์ (Poker)** - Texas Hold'em 2-9 คน
 5. **ไทยดัมมี่ (Thai Dummy)** - เกมจับคู่ 2-4 คน
-6. **แบล็คแจ็ค (Blackjack)** - เกมไพ่ 21 1-7 คน
+6. **ไพ่สลาฟ (Slave)** - เกมไพ่ทิ้ง 2-4 คน ⏳ Priority Last
 
-### 🔧 Core Systems
+### 🔧 Core Systems (Reusable Engine)
 
 #### PeerJS P2P System
 
-- [ ] `PeerStore` - จัดการ PeerJS connections
-- [ ] `RoomStore` - จัดการห้องเล่น (host/join)
-- [ ] P2P message protocol
+- [x] `PeerService` - PeerJS wrapper service
+- [x] `peerStore` - จัดการ PeerJS connections
+- [x] `roomStore` - จัดการห้องเล่น (host/join)
+- [x] P2P message protocol types
+- [x] Reusable GameLobby component
+- [ ] Game-specific room views (per game)
 
 #### User System (Local)
 
-- [ ] `UserStore` - เก็บข้อมูลผู้เล่นใน local
+- [x] `UserStore` - เก็บข้อมูลผู้เล่นใน local
   - userId (auto-generated UUID)
   - displayName
   - avatar
@@ -87,19 +93,21 @@
 - [ ] PlayerCard (avatar + name + status)
 - [ ] GameCard (game thumbnail + info)
 - [ ] RoomCard (room info + players)
-- [ ] ThemeToggle
+- [x] ThemeToggle
 
 #### Organisms
 
-- [ ] Header
-- [ ] Footer
+- [x] Header
+- [x] Footer
 - [ ] GameGrid
 - [ ] PlayerList
 - [ ] ChatBox
+- [ ] LobbyRoom (reusable)
+- [ ] GameRoom (reusable)
 
 #### Templates
 
-- [ ] MainLayout
+- [x] MainLayout
 - [ ] GameLayout
 
 ---
@@ -213,29 +221,31 @@ card-game-p2p-nextjs/
 
 ---
 
-## Current Sprint: Foundation Setup
+## Current Sprint: P2P Engine ✅
 
-### Task 1: MainLayout + Theme Toggle ✅ (In Progress)
+### ✅ Completed
 
-1. Create ThemeProvider with next-themes
-2. Create ThemeToggle component
-3. Create Header component
-4. Create Footer component
-5. Create MainLayout template
-6. Update root layout
+- [x] Task 1: MainLayout + Theme Toggle
+- [x] Task 2: User System (Zustand + localforage)
+- [x] Task 3: Landing Page, Games Hub, Profile Page
+- [x] Task 4: PeerJS P2P System
+  - [x] P2P types and message protocol (`peer.types.ts`)
+  - [x] PeerService wrapper (`PeerService.ts`)
+  - [x] peerStore (connection management)
+  - [x] roomStore (lobby/room management)
+  - [x] Reusable GameLobby component
+  - [x] Pok Deng game page with lobby
 
-### Task 2: User System
+### 🔄 In Progress: First Game Logic (Pok Deng)
 
-1. Create UserStore with Zustand
-2. Implement localforage persistence
-3. Create user profile generation (UUID, default name)
-
-### Task 3: Landing Page
-
-1. Create LandingView component
-2. Hero section
-3. Game cards preview
-4. Features section
+1. [x] Create card deck logic (`CardDeck.ts`)
+2. [x] Create Pok Deng game rules/logic (`PokDengGame.ts`)
+3. [x] Create card UI component (`PlayingCard.tsx`)
+4. [x] Create game table UI (`PokDengTable.tsx`)
+5. [x] Create Pok Deng store (`pokdengStore.ts`)
+6. [x] P2P game state synchronization
+7. [ ] Testing & bug fixes
+8. [ ] Polish UI and animations
 
 ---
 
@@ -244,4 +254,5 @@ card-game-p2p-nextjs/
 - Phase 1 ใช้ PeerJS ทำ P2P ไม่ต้องมี backend
 - ข้อมูล user เก็บใน browser ด้วย localforage
 - ทุกเกมสามารถเล่นได้ทันทีโดยไม่ต้อง login
+- Lobby และ Room system ต้อง reusable ใช้ได้ทุกเกม
 - Phase 2 (optional) เพิ่ม Colyseus server และ Supabase

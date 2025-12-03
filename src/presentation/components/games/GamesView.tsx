@@ -8,19 +8,6 @@ import Link from "next/link";
  */
 const games = [
   {
-    id: "slave",
-    name: "ไพ่สลาฟ",
-    nameEn: "Slave / President",
-    description: "เกมไพ่ทิ้งยอดฮิต ใครทิ้งไพ่หมดมือก่อนชนะ ผู้แพ้ต้องเป็นทาส!",
-    players: "2-4 คน",
-    duration: "10-20 นาที",
-    difficulty: "ง่าย",
-    icon: "♠️",
-    color: "from-gray-700 to-gray-900",
-    href: "/games/slave",
-    status: "coming_soon",
-  },
-  {
     id: "pokdeng",
     name: "ไพ่ป๊อกเดง",
     nameEn: "Pok Deng",
@@ -31,7 +18,7 @@ const games = [
     icon: "🎴",
     color: "from-red-500 to-red-700",
     href: "/games/pokdeng",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "kang",
@@ -83,6 +70,19 @@ const games = [
     icon: "🃏",
     color: "from-violet-500 to-violet-700",
     href: "/games/blackjack",
+    status: "coming_soon",
+  },
+  {
+    id: "slave",
+    name: "ไพ่สลาฟ",
+    nameEn: "Slave / President",
+    description: "เกมไพ่ทิ้งยอดฮิต ใครทิ้งไพ่หมดมือก่อนชนะ ผู้แพ้ต้องเป็นทาส!",
+    players: "2-4 คน",
+    duration: "10-20 นาที",
+    difficulty: "ง่าย",
+    icon: "♠️",
+    color: "from-gray-700 to-gray-900",
+    href: "/games/slave",
     status: "coming_soon",
   },
 ];
