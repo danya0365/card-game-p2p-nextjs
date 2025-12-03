@@ -18,17 +18,23 @@ import {
 import { useRoomStore } from "@/src/presentation/stores/roomStore";
 import { useUserStore } from "@/src/presentation/stores/userStore";
 import {
+  Check,
   ChevronDown,
   ChevronUp,
   Coins,
+  Copy,
   Crown,
+  HelpCircle,
   History,
+  LogOut,
   MessageCircle,
   Send,
-  Volume2,
-  VolumeX,
+  Users,
+  Wifi,
+  WifiOff,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 /**
@@ -67,11 +73,17 @@ export function PokDengTableV2() {
     amIDealer,
   } = usePokDengStore();
 
+  const router = useRouter();
+  const leaveRoom = useRoomStore((s) => s.leaveRoom);
+
   // HUD States
   const [showChat, setShowChat] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showMyCards, setShowMyCards] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showPlayers, setShowPlayers] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [copiedRoomId, setCopiedRoomId] = useState(false);
 
   // Chat States
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -153,6 +165,21 @@ export function PokDengTableV2() {
     setChatInput("");
   };
 
+  // Copy room ID to clipboard
+  const copyRoomId = async () => {
+    if (room?.roomId) {
+      await navigator.clipboard.writeText(room.roomId);
+      setCopiedRoomId(true);
+      setTimeout(() => setCopiedRoomId(false), 2000);
+    }
+  };
+
+  // Handle exit room
+  const handleExit = () => {
+    leaveRoom();
+    router.push("/games");
+  };
+
   if (!gameState) {
     return (
       <div className="fixed inset-0 bg-green-900 flex items-center justify-center">
@@ -184,14 +211,48 @@ export function PokDengTableV2() {
         }}
       />
 
-      {/* Top HUD - Room Info */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-3">
-        <div className="flex items-center justify-between">
-          {/* Left: Game Info */}
-          <div className="flex items-center gap-3">
-            <div className="bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-3">
-              <span className="text-white font-bold">🎴 ป๊อกเดง</span>
-              <span className="text-white/70 text-sm">
+      {/* Top HUD - Responsive */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-2 sm:p-3">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left: Exit & Room */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={() => setShowExitConfirm(true)}
+              className="p-1.5 sm:p-2 bg-red-500/80 hover:bg-red-500 backdrop-blur-sm rounded-lg text-white transition-colors"
+            >
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+            <button
+              onClick={copyRoomId}
+              className="bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 flex items-center gap-1 sm:gap-2"
+            >
+              <span className="text-white font-mono text-xs sm:text-sm font-bold">
+                {room?.roomId}
+              </span>
+              {copiedRoomId ? (
+                <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+              ) : (
+                <Copy className="w-3 h-3 sm:w-4 sm:h-4 text-white/50" />
+              )}
+            </button>
+            {/* Connection - Mobile: Icon only */}
+            <div
+              className={`p-1.5 sm:p-2 rounded-lg ${
+                peerId ? "bg-green-500/20" : "bg-red-500/20"
+              }`}
+            >
+              {peerId ? (
+                <Wifi className="w-4 h-4 text-green-400" />
+              ) : (
+                <WifiOff className="w-4 h-4 text-red-400" />
+              )}
+            </div>
+          </div>
+
+          {/* Center: Game Status & Pot */}
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1.5 items-center gap-2">
+              <span className="text-white/70 text-xs">
                 รอบ {gameState.roundNumber}
               </span>
               <div
@@ -202,45 +263,57 @@ export function PokDengTableV2() {
                 {getPhaseText(gameState.phase)}
               </div>
             </div>
+            <div className="bg-yellow-500/20 backdrop-blur-sm border border-yellow-500/50 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 flex items-center gap-1">
+              <Coins className="w-4 h-4 text-yellow-400" />
+              <span className="text-yellow-400 font-bold text-sm sm:text-base">
+                {gameState.pot}
+              </span>
+            </div>
           </div>
 
-          {/* Center: Pot */}
-          <div className="bg-yellow-500/20 backdrop-blur-sm border border-yellow-500/50 rounded-full px-6 py-2 flex items-center gap-2">
-            <Coins className="w-5 h-5 text-yellow-400" />
-            <span className="text-yellow-400 font-bold text-lg">
-              {gameState.pot}
-            </span>
-          </div>
-
-          {/* Right: HUD Toggles */}
-          <div className="flex items-center gap-2">
+          {/* Right: Quick Actions */}
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2 bg-black/40 backdrop-blur-sm rounded-lg text-white/70 hover:text-white transition-colors"
+              onClick={() => setShowPlayers(!showPlayers)}
+              className={`p-1.5 sm:p-2 backdrop-blur-sm rounded-lg transition-colors relative ${
+                showPlayers
+                  ? "bg-blue-500 text-white"
+                  : "bg-black/40 text-white/70"
+              }`}
             >
-              {soundEnabled ? (
-                <Volume2 className="w-5 h-5" />
-              ) : (
-                <VolumeX className="w-5 h-5" />
-              )}
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-[10px] flex items-center justify-center text-white">
+                {gameState.players.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className={`hidden sm:block p-2 backdrop-blur-sm rounded-lg transition-colors ${
+                showHelp
+                  ? "bg-blue-500 text-white"
+                  : "bg-black/40 text-white/70"
+              }`}
+            >
+              <HelpCircle className="w-5 h-5" />
             </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className={`p-2 backdrop-blur-sm rounded-lg transition-colors ${
+              className={`p-1.5 sm:p-2 backdrop-blur-sm rounded-lg transition-colors ${
                 showHistory
                   ? "bg-blue-500 text-white"
-                  : "bg-black/40 text-white/70 hover:text-white"
+                  : "bg-black/40 text-white/70"
               }`}
             >
-              <History className="w-5 h-5" />
+              <History className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={() => setShowChat(!showChat)}
-              className={`p-2 backdrop-blur-sm rounded-lg transition-colors relative ${
+              className={`p-1.5 sm:p-2 backdrop-blur-sm rounded-lg transition-colors relative ${
                 showChat
                   ? "bg-blue-500 text-white"
-                  : "bg-black/40 text-white/70 hover:text-white"
+                  : "bg-black/40 text-white/70"
               }`}
+              title="แชท"
             >
               <MessageCircle className="w-5 h-5" />
               {chatMessages.length > 0 && !showChat && (
@@ -254,7 +327,7 @@ export function PokDengTableV2() {
       </div>
 
       {/* Current Action Banner */}
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10">
+      <div className="absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-10 w-[90%] sm:w-auto">
         <ActionBanner
           phase={gameState.phase}
           isHost={isHost}
@@ -266,26 +339,26 @@ export function PokDengTableV2() {
       </div>
 
       {/* Game Table - Center Area */}
-      <div className="absolute inset-0 flex items-center justify-center pt-20 pb-48">
+      <div className="absolute inset-0 flex items-center justify-center pt-24 sm:pt-28 pb-40 sm:pb-52">
         {/* Table */}
-        <div className="relative w-[90vw] max-w-3xl aspect-[16/10]">
+        <div className="relative w-[95vw] sm:w-[85vw] max-w-2xl aspect-[4/3] sm:aspect-[16/10]">
           {/* Table border glow */}
-          <div className="absolute inset-0 rounded-[100px] bg-linear-to-b from-yellow-600/30 to-yellow-900/30 blur-xl" />
+          <div className="absolute inset-0 rounded-[40px] sm:rounded-[80px] bg-linear-to-b from-yellow-600/30 to-yellow-900/30 blur-xl" />
 
           {/* Table surface */}
-          <div className="absolute inset-2 rounded-[90px] bg-linear-to-b from-green-700 to-green-800 border-4 border-yellow-700/50 shadow-2xl" />
+          <div className="absolute inset-1 sm:inset-2 rounded-[35px] sm:rounded-[70px] bg-linear-to-b from-green-700 to-green-800 border-2 sm:border-4 border-yellow-700/50 shadow-2xl" />
 
           {/* Table inner line */}
-          <div className="absolute inset-8 rounded-[70px] border-2 border-yellow-600/20" />
+          <div className="absolute inset-4 sm:inset-6 rounded-[25px] sm:rounded-[55px] border border-yellow-600/20" />
 
           {/* Dealer in Center */}
           {dealer && (
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-linear-to-b from-yellow-500 to-yellow-600 flex items-center justify-center text-3xl shadow-lg border-2 border-yellow-400">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-b from-yellow-500 to-yellow-600 flex items-center justify-center text-2xl sm:text-3xl shadow-lg border-2 border-yellow-400">
                   {dealer.avatar}
                 </div>
-                <Crown className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400 drop-shadow-lg" />
+                <Crown className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 text-yellow-400 drop-shadow-lg" />
               </div>
               <p className="text-white font-medium text-sm mt-1 text-shadow">
                 {dealer.displayName}
@@ -514,9 +587,9 @@ export function PokDengTableV2() {
         )}
       </div>
 
-      {/* Chat Panel - Right Side */}
+      {/* Chat Panel - Mobile: Bottom sheet, Desktop: Right side */}
       {showChat && (
-        <div className="absolute right-4 top-20 bottom-52 w-80 bg-black/80 backdrop-blur-sm rounded-xl border border-white/10 flex flex-col z-30 animate-in slide-in-from-right duration-200">
+        <div className="absolute inset-x-2 bottom-2 sm:inset-auto sm:right-4 sm:top-14 sm:bottom-44 sm:w-72 h-64 sm:h-auto bg-black/90 backdrop-blur-sm rounded-xl border border-white/10 flex flex-col z-30">
           <div className="flex items-center justify-between p-3 border-b border-white/10">
             <h3 className="text-white font-medium flex items-center gap-2">
               <MessageCircle className="w-4 h-4" /> แชท
@@ -579,9 +652,9 @@ export function PokDengTableV2() {
         </div>
       )}
 
-      {/* History Panel - Left Side */}
+      {/* History Panel - Mobile: Bottom sheet, Desktop: Left side */}
       {showHistory && (
-        <div className="absolute left-4 top-20 bottom-52 w-80 bg-black/80 backdrop-blur-sm rounded-xl border border-white/10 flex flex-col z-30 animate-in slide-in-from-left duration-200">
+        <div className="absolute inset-x-2 bottom-2 sm:inset-auto sm:left-4 sm:top-14 sm:bottom-44 sm:w-72 h-64 sm:h-auto bg-black/90 backdrop-blur-sm rounded-xl border border-white/10 flex flex-col z-30">
           <div className="flex items-center justify-between p-3 border-b border-white/10">
             <h3 className="text-white font-medium flex items-center gap-2">
               <History className="w-4 h-4" /> ประวัติ ({actionLogs.length})
@@ -623,6 +696,136 @@ export function PokDengTableV2() {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Players Panel */}
+      {showPlayers && (
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-black/90 backdrop-blur-sm rounded-xl border border-white/10 z-40">
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <h3 className="text-white font-medium flex items-center gap-2">
+              <Users className="w-5 h-5" /> ผู้เล่นในห้อง (
+              {gameState.players.length})
+            </h3>
+            <button
+              onClick={() => setShowPlayers(false)}
+              className="text-white/50 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+            {gameState.players.map((player) => (
+              <div
+                key={player.oderId}
+                className="flex items-center gap-3 p-2 rounded-lg bg-white/5"
+              >
+                <span className="text-2xl">{player.avatar}</span>
+                <div className="flex-1">
+                  <p className="text-white font-medium">{player.displayName}</p>
+                  <p className="text-xs text-white/50">
+                    {player.isDealer
+                      ? "👑 เจ้ามือ"
+                      : `เดิมพัน: ${player.bet || 0}`}
+                  </p>
+                </div>
+                {player.oderId === peerId && (
+                  <span className="text-xs bg-blue-500 px-2 py-1 rounded text-white">
+                    คุณ
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] max-h-[80vh] bg-black/90 backdrop-blur-sm rounded-xl border border-white/10 z-40 overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <h3 className="text-white font-medium flex items-center gap-2">
+              <HelpCircle className="w-5 h-5" /> วิธีเล่นป๊อกเดง
+            </h3>
+            <button
+              onClick={() => setShowHelp(false)}
+              className="text-white/50 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh] text-white/80 text-sm">
+            <div>
+              <h4 className="text-white font-bold mb-2">🎯 เป้าหมาย</h4>
+              <p>ทำแต้มให้ได้ 8 หรือ 9 (ป๊อก) หรือมากกว่าเจ้ามือ</p>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-2">🃏 การนับแต้ม</h4>
+              <ul className="list-disc list-inside space-y-1">
+                <li>A = 1, 2-9 = ตามหน้าไพ่, 10/J/Q/K = 0</li>
+                <li>รวมแต้มแล้วเอาเฉพาะหลักหน่วย (เช่น 15 = 5 แต้ม)</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-2">🏆 มือพิเศษ</h4>
+              <ul className="list-disc list-inside space-y-1">
+                <li>
+                  <span className="text-yellow-400">ป๊อก 9</span> - 2 ใบได้ 9
+                  แต้ม (x3)
+                </li>
+                <li>
+                  <span className="text-yellow-400">ป๊อก 8</span> - 2 ใบได้ 8
+                  แต้ม (x2)
+                </li>
+                <li>
+                  <span className="text-purple-400">ตอง</span> - 3 ใบเหมือนกัน
+                  (x5)
+                </li>
+                <li>
+                  <span className="text-blue-400">สเตรทฟลัช</span> -
+                  เรียงดอกเดียว (x5)
+                </li>
+                <li>
+                  <span className="text-green-400">สเตรท</span> - เรียง (x3)
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-2">🎮 วิธีเล่น</h4>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>วางเดิมพัน (ยกเว้นเจ้ามือ)</li>
+                <li>รับไพ่ 2 ใบ</li>
+                <li>เลือก: จั่ว (ไพ่ใบที่ 3) / พอ / หมอบ</li>
+                <li>เปิดไพ่เปรียบกับเจ้ามือ</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exit Confirm Modal */}
+      {showExitConfirm && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-xl p-6 max-w-sm w-full mx-4 border border-white/10">
+            <h3 className="text-white text-lg font-bold mb-2">ออกจากห้อง?</h3>
+            <p className="text-white/70 text-sm mb-6">
+              คุณแน่ใจหรือไม่ว่าต้องการออกจากห้องนี้?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="flex-1 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleExit}
+                className="flex-1 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                ออกจากห้อง
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -803,15 +1006,16 @@ function getPlayerPosition(index: number): {
   left?: string;
   right?: string;
 } {
-  // Positions for up to 8 players (excluding dealer in center)
+  // Positions for up to 7 players around the table (dealer in center)
+  // Arranged to avoid center overlap
   const positions = [
-    { top: "15%", left: "50%" }, // Top center
-    { top: "25%", right: "15%" }, // Top right
-    { top: "50%", right: "5%" }, // Right
-    { top: "75%", right: "15%" }, // Bottom right
-    { top: "75%", left: "15%" }, // Bottom left
-    { top: "50%", left: "5%" }, // Left
-    { top: "25%", left: "15%" }, // Top left
+    { top: "8%", left: "50%" }, // Top center (far from dealer)
+    { top: "20%", right: "10%" }, // Top right
+    { top: "50%", right: "3%" }, // Right
+    { top: "80%", right: "10%" }, // Bottom right
+    { top: "80%", left: "10%" }, // Bottom left
+    { top: "50%", left: "3%" }, // Left
+    { top: "20%", left: "10%" }, // Top left
   ];
 
   return positions[index % positions.length];
