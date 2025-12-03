@@ -244,8 +244,10 @@ card-game-p2p-nextjs/
 4. [x] Create game table UI (`PokDengTable.tsx`)
 5. [x] Create Pok Deng store (`pokdengStore.ts`)
 6. [x] P2P game state synchronization
-7. [ ] Testing & bug fixes
-8. [ ] Polish UI and animations
+7. [x] Current action instruction banner
+8. [x] Game action history log
+9. [ ] Testing & bug fixes
+10. [ ] Polish UI and animations
 
 ---
 

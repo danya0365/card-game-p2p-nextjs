@@ -8,10 +8,13 @@ import type {
 } from "@/src/domain/types/pokdeng.types";
 import { CardHand } from "@/src/presentation/components/atoms/PlayingCard";
 import { usePeerStore } from "@/src/presentation/stores/peerStore";
-import { usePokDengStore } from "@/src/presentation/stores/pokdengStore";
+import {
+  usePokDengStore,
+  type GameLogEntry,
+} from "@/src/presentation/stores/pokdengStore";
 import { useRoomStore } from "@/src/presentation/stores/roomStore";
-import { Coins, Crown } from "lucide-react";
-import { useEffect } from "react";
+import { Coins, Crown, Info, ScrollText } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 /**
  * Pok Deng game table component
@@ -22,6 +25,7 @@ export function PokDengTable() {
   const {
     gameState,
     selectedBet,
+    actionLogs,
     initGame,
     syncState,
     startRound,
@@ -49,8 +53,11 @@ export function PokDengTable() {
 
     const unsubscribe = peerStore.onMessage((message) => {
       if (message.type === "game_state") {
-        const payload = message.payload as { gameState: PokDengGameState };
-        syncState(payload.gameState);
+        const payload = message.payload as {
+          gameState: PokDengGameState;
+          actionLogs?: GameLogEntry[];
+        };
+        syncState(payload.gameState, payload.actionLogs);
       } else if (message.type === "game_action" && isHost) {
         usePokDengStore
           .getState()
@@ -84,7 +91,7 @@ export function PokDengTable() {
   return (
     <div className="max-w-4xl mx-auto p-4">
       {/* Game header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-4">
         <h1 className="text-2xl font-bold text-foreground mb-2">🎴 ป๊อกเดง</h1>
         <div className="flex items-center justify-center gap-4 text-sm">
           <span className="text-muted">รอบที่ {gameState.roundNumber}</span>
@@ -94,6 +101,16 @@ export function PokDengTable() {
           </span>
         </div>
       </div>
+
+      {/* Current Action Instruction */}
+      <CurrentActionBanner
+        phase={gameState.phase}
+        isHost={isHost}
+        isDealer={iAmDealer}
+        isMyTurn={myTurn}
+        myBet={myPlayer?.bet || 0}
+        hasDrawn={myPlayer?.hasDrawn || false}
+      />
 
       {/* Other players */}
       <div className="flex justify-center gap-4 mb-8 flex-wrap">
@@ -305,6 +322,9 @@ export function PokDengTable() {
           </div>
         </div>
       )}
+
+      {/* Action History */}
+      <ActionHistory logs={actionLogs} />
     </div>
   );
 }
@@ -411,4 +431,173 @@ function getPhaseColor(phase: string): string {
     finished: "text-gray-500",
   };
   return colors[phase] || "text-foreground";
+}
+
+/**
+ * Current Action Banner - Shows what the player should do
+ */
+function CurrentActionBanner({
+  phase,
+  isHost,
+  isDealer,
+  isMyTurn,
+  myBet,
+  hasDrawn,
+}: {
+  phase: string;
+  isHost: boolean;
+  isDealer: boolean;
+  isMyTurn: boolean;
+  myBet: number;
+  hasDrawn: boolean;
+}) {
+  let icon = "💡";
+  let message = "";
+  let bgColor = "bg-blue-500/10 border-blue-500/30";
+  let textColor = "text-blue-600 dark:text-blue-400";
+
+  switch (phase) {
+    case "waiting":
+      if (isHost) {
+        icon = "🎮";
+        message = "กดปุ่ม 'เริ่มรอบใหม่' เพื่อเริ่มเกม";
+        bgColor = "bg-green-500/10 border-green-500/30";
+        textColor = "text-green-600 dark:text-green-400";
+      } else {
+        icon = "⏳";
+        message = "รอเจ้าห้องเริ่มเกม...";
+      }
+      break;
+    case "betting":
+      if (isDealer) {
+        icon = "👑";
+        message = "คุณเป็นเจ้ามือ - รอผู้เล่นวางเดิมพัน";
+      } else if (myBet > 0) {
+        icon = "✅";
+        message = `เดิมพันแล้ว ${myBet} - รอผู้เล่นคนอื่น`;
+        bgColor = "bg-green-500/10 border-green-500/30";
+        textColor = "text-green-600 dark:text-green-400";
+      } else {
+        icon = "💰";
+        message = "เลือกจำนวนเงินและกด 'เดิมพัน'";
+        bgColor = "bg-yellow-500/10 border-yellow-500/30";
+        textColor = "text-yellow-600 dark:text-yellow-400";
+      }
+      break;
+    case "dealing":
+      icon = "🃏";
+      message = "กำลังแจกไพ่...";
+      break;
+    case "playing":
+      if (hasDrawn) {
+        icon = "✅";
+        message = "เลือกแล้ว - รอผู้เล่นคนอื่น";
+        bgColor = "bg-green-500/10 border-green-500/30";
+        textColor = "text-green-600 dark:text-green-400";
+      } else if (isMyTurn) {
+        icon = "🎯";
+        message = "ถึงตาคุณ! เลือก: จั่วไพ่ / พอ / หมอบ";
+        bgColor = "bg-yellow-500/10 border-yellow-500/30";
+        textColor = "text-yellow-600 dark:text-yellow-400";
+      } else {
+        icon = "⏳";
+        message = "รอผู้เล่นคนอื่นตัดสินใจ...";
+      }
+      break;
+    case "revealing":
+      icon = "👁️";
+      message = "เปิดไพ่เปรียบ!";
+      bgColor = "bg-purple-500/10 border-purple-500/30";
+      textColor = "text-purple-600 dark:text-purple-400";
+      break;
+    case "settling":
+    case "finished":
+      icon = "🏆";
+      message = isHost
+        ? "กด 'รอบถัดไป' เพื่อเล่นต่อ"
+        : "รอเจ้าห้องเริ่มรอบถัดไป";
+      bgColor = "bg-orange-500/10 border-orange-500/30";
+      textColor = "text-orange-600 dark:text-orange-400";
+      break;
+  }
+
+  return (
+    <div className={`mb-6 p-4 rounded-xl border ${bgColor}`}>
+      <div className="flex items-center gap-3">
+        <Info className={`w-5 h-5 ${textColor}`} />
+        <div>
+          <p className="text-xs text-muted mb-1">สิ่งที่ต้องทำ</p>
+          <p className={`font-medium ${textColor}`}>
+            <span className="mr-2">{icon}</span>
+            {message}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Action History Panel
+ */
+function ActionHistory({ logs }: { logs: GameLogEntry[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll to bottom when new logs arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [logs]);
+
+  if (logs.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-6 bg-surface border border-border rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 bg-muted-light border-b border-border">
+        <ScrollText className="w-4 h-4 text-muted" />
+        <h3 className="font-medium text-foreground text-sm">ประวัติเกม</h3>
+        <span className="text-xs text-muted">({logs.length})</span>
+      </div>
+      <div ref={scrollRef} className="max-h-48 overflow-y-auto p-3 space-y-2">
+        {logs.map((log) => (
+          <div
+            key={log.id}
+            className={`flex items-start gap-2 text-sm ${
+              log.type === "result" ? "bg-muted-light/50 rounded-lg p-2" : ""
+            }`}
+          >
+            <span className="text-base leading-none mt-0.5">{log.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                {log.playerName && (
+                  <span className="font-medium text-foreground">
+                    {log.playerName}
+                  </span>
+                )}
+                <span
+                  className={
+                    log.type === "system"
+                      ? "text-blue-500"
+                      : log.type === "result"
+                      ? log.message.includes("ชนะ")
+                        ? "text-green-500"
+                        : "text-red-500"
+                      : "text-foreground"
+                  }
+                >
+                  {log.message}
+                </span>
+              </div>
+              <span className="text-xs text-muted">
+                {new Date(log.timestamp).toLocaleTimeString("th-TH")}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
