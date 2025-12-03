@@ -10,6 +10,8 @@ import {
   CardHand,
   PlayingCard,
 } from "@/src/presentation/components/atoms/PlayingCard";
+import { SoundSettingsPanel } from "@/src/presentation/components/molecules/SoundSettingsPanel";
+import { useSound } from "@/src/presentation/hooks/useSound";
 import {
   useDummyStore,
   type GameLogEntry,
@@ -32,6 +34,7 @@ import {
   MessageCircle,
   Send,
   Users,
+  Volume2,
   Wifi,
   WifiOff,
   X,
@@ -79,6 +82,10 @@ export function DummyTableV2() {
   const router = useRouter();
   const leaveRoom = useRoomStore((s) => s.leaveRoom);
 
+  // Sound hooks
+  const { playGameStart, playWin, playClick, startGameBgm, stopBgm } =
+    useSound();
+
   // HUD States
   const [showChat, setShowChat] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -87,6 +94,7 @@ export function DummyTableV2() {
   const [showHelp, setShowHelp] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [showSoundSettings, setShowSoundSettings] = useState(false);
   const [copiedRoomId, setCopiedRoomId] = useState(false);
 
   // Chat States
@@ -146,6 +154,32 @@ export function DummyTableV2() {
       setShowResult(true);
     }
   }, [gameState?.phase]);
+
+  // Auto-start BGM when game is ready
+  const bgmStarted = useRef(false);
+  useEffect(() => {
+    if (gameState && !bgmStarted.current) {
+      startGameBgm();
+      bgmStarted.current = true;
+    }
+    return () => {
+      stopBgm();
+    };
+  }, [gameState, startGameBgm, stopBgm]);
+
+  // Play sound on phase changes
+  const prevPhase = useRef(gameState?.phase);
+  useEffect(() => {
+    if (!gameState) return;
+    if (prevPhase.current !== gameState.phase) {
+      if (gameState.phase === "playing") {
+        playGameStart();
+      } else if (gameState.phase === "finished") {
+        playWin();
+      }
+      prevPhase.current = gameState.phase;
+    }
+  }, [gameState, playGameStart, playWin]);
 
   // Send chat message
   const sendChat = () => {
@@ -324,6 +358,15 @@ export function DummyTableV2() {
               className="p-2 bg-black/30 hover:bg-black/50 rounded-lg transition-colors"
             >
               <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
+            </button>
+            <button
+              onClick={() => {
+                playClick();
+                setShowSoundSettings(true);
+              }}
+              className="p-2 bg-black/30 hover:bg-black/50 rounded-lg transition-colors"
+            >
+              <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
             </button>
             <button
               onClick={() => setShowHelp(!showHelp)}
@@ -895,6 +938,12 @@ export function DummyTableV2() {
           </div>
         </div>
       )}
+
+      {/* Sound Settings Panel */}
+      <SoundSettingsPanel
+        isOpen={showSoundSettings}
+        onClose={() => setShowSoundSettings(false)}
+      />
     </div>
   );
 }

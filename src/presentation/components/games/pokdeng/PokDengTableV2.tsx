@@ -7,6 +7,8 @@ import type {
   PokDengPlayer,
 } from "@/src/domain/types/pokdeng.types";
 import { CardHand } from "@/src/presentation/components/atoms/PlayingCard";
+import { SoundSettingsPanel } from "@/src/presentation/components/molecules/SoundSettingsPanel";
+import { useSound } from "@/src/presentation/hooks/useSound";
 import {
   createP2PMessage,
   usePeerStore,
@@ -30,6 +32,7 @@ import {
   MessageCircle,
   Send,
   Users,
+  Volume2,
   Wifi,
   WifiOff,
   X,
@@ -76,6 +79,18 @@ export function PokDengTableV2() {
   const router = useRouter();
   const leaveRoom = useRoomStore((s) => s.leaveRoom);
 
+  // Sound hooks
+  const {
+    playGameStart,
+    playCardPlay,
+    playBet,
+    playWin,
+    playLose,
+    playClick,
+    startGameBgm,
+    stopBgm,
+  } = useSound();
+
   // HUD States
   const [showChat, setShowChat] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -84,6 +99,7 @@ export function PokDengTableV2() {
   const [showHelp, setShowHelp] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [showSoundSettings, setShowSoundSettings] = useState(false);
   const [copiedRoomId, setCopiedRoomId] = useState(false);
 
   // Chat States
@@ -144,6 +160,33 @@ export function PokDengTableV2() {
       setShowResult(true);
     }
   }, [gameState?.phase]);
+
+  // Auto-start BGM when game is ready
+  const bgmStarted = useRef(false);
+  useEffect(() => {
+    if (gameState && !bgmStarted.current) {
+      startGameBgm();
+      bgmStarted.current = true;
+    }
+    return () => {
+      stopBgm();
+    };
+  }, [gameState, startGameBgm, stopBgm]);
+
+  // Play sound on phase changes
+  const prevPhase = useRef(gameState?.phase);
+  useEffect(() => {
+    if (!gameState) return;
+    if (prevPhase.current !== gameState.phase) {
+      if (gameState.phase === "dealing") {
+        playGameStart();
+      } else if (gameState.phase === "settling") {
+        // Just play win sound for settling phase
+        playWin();
+      }
+      prevPhase.current = gameState.phase;
+    }
+  }, [gameState, playGameStart, playWin]);
 
   // Send chat message
   const sendChat = () => {
@@ -303,6 +346,19 @@ export function PokDengTableV2() {
               }`}
             >
               <HelpCircle className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                playClick();
+                setShowSoundSettings(!showSoundSettings);
+              }}
+              className={`p-1.5 sm:p-2 backdrop-blur-sm rounded-lg transition-colors ${
+                showSoundSettings
+                  ? "bg-purple-500 text-white"
+                  : "bg-black/40 text-white/70"
+              }`}
+            >
+              <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
@@ -989,6 +1045,12 @@ export function PokDengTableV2() {
           </div>
         </div>
       )}
+
+      {/* Sound Settings Panel */}
+      <SoundSettingsPanel
+        isOpen={showSoundSettings}
+        onClose={() => setShowSoundSettings(false)}
+      />
     </div>
   );
 }

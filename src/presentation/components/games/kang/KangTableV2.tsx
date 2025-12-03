@@ -6,6 +6,8 @@ import type {
   KangPlayer,
 } from "@/src/domain/types/kang.types";
 import { CardHand } from "@/src/presentation/components/atoms/PlayingCard";
+import { SoundSettingsPanel } from "@/src/presentation/components/molecules/SoundSettingsPanel";
+import { useSound } from "@/src/presentation/hooks/useSound";
 import {
   useKangStore,
   type GameLogEntry,
@@ -29,6 +31,7 @@ import {
   MessageCircle,
   Send,
   Users,
+  Volume2,
   Wifi,
   WifiOff,
   X,
@@ -76,6 +79,10 @@ export function KangTableV2() {
   const router = useRouter();
   const leaveRoom = useRoomStore((s) => s.leaveRoom);
 
+  // Sound hooks
+  const { playGameStart, playWin, playClick, startGameBgm, stopBgm } =
+    useSound();
+
   // HUD States
   const [showChat, setShowChat] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -84,6 +91,7 @@ export function KangTableV2() {
   const [showHelp, setShowHelp] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [showSoundSettings, setShowSoundSettings] = useState(false);
   const [copiedRoomId, setCopiedRoomId] = useState(false);
 
   // Chat States
@@ -143,6 +151,32 @@ export function KangTableV2() {
       setShowResult(true);
     }
   }, [gameState?.phase]);
+
+  // Auto-start BGM when game is ready
+  const bgmStarted = useRef(false);
+  useEffect(() => {
+    if (gameState && !bgmStarted.current) {
+      startGameBgm();
+      bgmStarted.current = true;
+    }
+    return () => {
+      stopBgm();
+    };
+  }, [gameState, startGameBgm, stopBgm]);
+
+  // Play sound on phase changes
+  const prevPhase = useRef(gameState?.phase);
+  useEffect(() => {
+    if (!gameState) return;
+    if (prevPhase.current !== gameState.phase) {
+      if (gameState.phase === "dealing") {
+        playGameStart();
+      } else if (gameState.phase === "settling") {
+        playWin();
+      }
+      prevPhase.current = gameState.phase;
+    }
+  }, [gameState, playGameStart, playWin]);
 
   // Send chat message
   const sendChat = () => {
@@ -299,6 +333,19 @@ export function KangTableV2() {
               className="hidden sm:block p-2 bg-black/30 hover:bg-black/50 rounded-lg transition-colors"
             >
               <HelpCircle className="w-5 h-5 text-white/70" />
+            </button>
+            <button
+              onClick={() => {
+                playClick();
+                setShowSoundSettings(!showSoundSettings);
+              }}
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                showSoundSettings
+                  ? "bg-purple-500 text-white"
+                  : "bg-black/30 hover:bg-black/50"
+              }`}
+            >
+              <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
             </button>
           </div>
         </div>
@@ -946,6 +993,12 @@ export function KangTableV2() {
           </div>
         </div>
       )}
+
+      {/* Sound Settings Panel */}
+      <SoundSettingsPanel
+        isOpen={showSoundSettings}
+        onClose={() => setShowSoundSettings(false)}
+      />
     </div>
   );
 }
