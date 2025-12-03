@@ -266,11 +266,21 @@ card-game-p2p-nextjs/
 - [x] P2P game state synchronization
 - [x] Hit, Stand, Double, Split, Surrender actions
 
-### 🔜 Next: Poker / Dummy / Slave
+### ✅ Completed - Poker (โป๊กเกอร์)
+
+- [x] Create Poker game types (`poker.types.ts`)
+- [x] Create Poker game rules/logic (`PokerGame.ts`)
+- [x] Create Poker store (`pokerStore.ts`)
+- [x] Create Poker UI components (`PokerView.tsx`, `PokerTableV2.tsx`)
+- [x] Create Poker page route (`/games/poker`)
+- [x] P2P game state synchronization
+- [x] Fold, Check, Call, Raise, All-in actions
+- [x] Hand evaluation (Royal Flush to High Card)
+
+### 🔜 Next: Dummy / Slave
 
 เกมต่อไปที่สามารถทำได้:
 
-- **โป๊กเกอร์** (Texas Hold'em) - ยาก
 - **ดัมมี่** - ปานกลาง
 - **สลาฟ** - ง่าย
 
