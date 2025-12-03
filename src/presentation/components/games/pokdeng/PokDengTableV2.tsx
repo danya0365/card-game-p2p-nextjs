@@ -83,6 +83,7 @@ export function PokDengTableV2() {
   const [showPlayers, setShowPlayers] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showResult, setShowResult] = useState(false);
   const [copiedRoomId, setCopiedRoomId] = useState(false);
 
   // Chat States
@@ -136,6 +137,13 @@ export function PokDengTableV2() {
         historyScrollRef.current.scrollHeight;
     }
   }, [actionLogs]);
+
+  // Auto show result modal when settling phase
+  useEffect(() => {
+    if (gameState?.phase === "settling") {
+      setShowResult(true);
+    }
+  }, [gameState?.phase]);
 
   // Send chat message
   const sendChat = () => {
@@ -799,6 +807,158 @@ export function PokDengTableV2() {
                 <li>เลือก: จั่ว (ไพ่ใบที่ 3) / พอ / หมอบ</li>
                 <li>เปิดไพ่เปรียบกับเจ้ามือ</li>
               </ol>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Round Result Modal */}
+      {showResult && gameState.phase === "settling" && (
+        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl w-full max-w-lg border border-white/10 overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 p-4 text-center">
+              <h2 className="text-2xl font-bold text-white">
+                🏆 สรุปผลรอบที่ {gameState.roundNumber}
+              </h2>
+            </div>
+
+            {/* Dealer Result */}
+            {dealer && (
+              <div className="p-4 border-b border-white/10 bg-black/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center text-2xl border-2 border-yellow-400">
+                      {dealer.avatar}
+                    </div>
+                    <div>
+                      <p className="text-white font-bold flex items-center gap-1">
+                        <Crown className="w-4 h-4 text-yellow-400" />
+                        {dealer.displayName}
+                      </p>
+                      <p className="text-yellow-400 text-sm">เจ้ามือ</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-white">
+                      {dealer.result?.points || 0} แต้ม
+                    </p>
+                    <p className="text-white/60 text-sm">
+                      {dealer.result
+                        ? PokDengGame.getHandTypeName(dealer.result.handType)
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+                {dealer.hand.length > 0 && (
+                  <div className="mt-3 flex justify-center">
+                    <CardHand cards={dealer.hand} size="sm" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Players Results */}
+            <div className="p-4 space-y-3 max-h-60 overflow-y-auto">
+              {gameState.players
+                .filter((p) => !p.isDealer)
+                .map((player) => {
+                  const isMe = player.oderId === peerId;
+                  const won = player.payout > 0;
+                  const lost = player.payout < 0;
+                  const tied = player.payout === 0 && !player.isFolded;
+
+                  return (
+                    <div
+                      key={player.oderId}
+                      className={`p-3 rounded-xl ${
+                        isMe
+                          ? won
+                            ? "bg-green-500/20 border border-green-500/50"
+                            : lost
+                            ? "bg-red-500/20 border border-red-500/50"
+                            : "bg-blue-500/20 border border-blue-500/50"
+                          : "bg-white/5"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xl">
+                            {player.avatar}
+                          </div>
+                          <div>
+                            <p className="text-white font-medium flex items-center gap-1">
+                              {player.displayName}
+                              {isMe && (
+                                <span className="text-xs bg-blue-500 px-1.5 py-0.5 rounded">
+                                  คุณ
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-white/50 text-xs">
+                              {player.isFolded
+                                ? "หมอบ"
+                                : player.result
+                                ? `${
+                                    player.result.points
+                                  } แต้ม (${PokDengGame.getHandTypeName(
+                                    player.result.handType
+                                  )})`
+                                : "-"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {player.isFolded ? (
+                            <p className="text-red-400 font-bold">🚩 หมอบ</p>
+                          ) : won ? (
+                            <p className="text-green-400 font-bold text-lg">
+                              +{player.payout}
+                            </p>
+                          ) : lost ? (
+                            <p className="text-red-400 font-bold text-lg">
+                              {player.payout}
+                            </p>
+                          ) : tied ? (
+                            <p className="text-white/50 font-bold">เสมอ</p>
+                          ) : null}
+                        </div>
+                      </div>
+                      {/* Show player cards */}
+                      {!player.isFolded && player.hand.length > 0 && (
+                        <div className="mt-2 flex justify-center scale-75 origin-center">
+                          <CardHand cards={player.hand} size="sm" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 border-t border-white/10 bg-black/20">
+              {isHost ? (
+                <button
+                  onClick={() => {
+                    setShowResult(false);
+                  }}
+                  className="w-full py-3 rounded-xl bg-green-500 hover:bg-green-400 text-white font-bold text-lg transition-colors"
+                >
+                  ปิด
+                </button>
+              ) : (
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowResult(false)}
+                    className="px-6 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                  >
+                    ปิด
+                  </button>
+                  <p className="text-white/50 text-sm mt-2">
+                    รอ Host เริ่มรอบถัดไป...
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
