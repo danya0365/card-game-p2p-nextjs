@@ -1,7 +1,7 @@
 "use client";
 
 import { PokDengTableV2 } from "@/src/presentation/components/games/pokdeng/PokDengTableV2";
-import { GameLobby } from "@/src/presentation/components/organisms/GameLobby";
+import { GameLobbyV2 } from "@/src/presentation/components/organisms/GameLobbyV2";
 import { useRoomStore } from "@/src/presentation/stores/roomStore";
 import { useState } from "react";
 
@@ -23,10 +23,6 @@ export function PokDengView() {
     return <PokDengTableV2 />;
   }
 
-  // Show lobby
-  return (
-    <div className="py-12">
-      <GameLobby gameType="pokdeng" onGameStart={handleGameStart} />
-    </div>
-  );
+  // Show lobby (full screen)
+  return <GameLobbyV2 gameType="pokdeng" onGameStart={handleGameStart} />;
 }

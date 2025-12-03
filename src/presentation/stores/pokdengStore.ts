@@ -10,6 +10,127 @@ import { useRoomStore } from "./roomStore";
 import { useUserStore } from "./userStore";
 
 /**
+ * Helper function to log phase changes with detailed info
+ */
+function _logPhaseChange(
+  state: PokDengGameState,
+  addLog: (
+    type: "system" | "action" | "result",
+    message: string,
+    playerName?: string,
+    icon?: string
+  ) => void
+): void {
+  const dealer = state.players.find((p) => p.isDealer);
+
+  switch (state.phase) {
+    case "dealing":
+      addLog("system", "🃏 แจกไพ่ให้ผู้เล่นทุกคน คนละ 2 ใบ", undefined, "🃏");
+      break;
+
+    case "playing":
+      const currentPlayer = state.players[state.currentPlayerIndex];
+      if (currentPlayer) {
+        addLog(
+          "system",
+          `🎮 ถึงตา ${currentPlayer.displayName} เลือกจั่วหรือพอ`,
+          currentPlayer.displayName,
+          "🎮"
+        );
+      }
+      break;
+
+    case "revealing":
+      addLog("system", "👁️ เปิดไพ่ทุกคน!", undefined, "👁️");
+      // Log each player's hand
+      state.players.forEach((p) => {
+        if (p.result) {
+          const handTypeName = PokDengGame.getHandTypeName(p.result.handType);
+          const points = p.result.points;
+          if (p.isDealer) {
+            addLog(
+              "result",
+              `${points} แต้ม (${handTypeName})`,
+              `👑 ${p.displayName}`,
+              "🎴"
+            );
+          } else if (!p.isFolded) {
+            addLog(
+              "result",
+              `${points} แต้ม (${handTypeName})`,
+              p.displayName,
+              "🎴"
+            );
+          }
+        }
+      });
+      break;
+
+    case "settling":
+      addLog("system", "━━━━━━━━━━━━━━━━━━━━━━", undefined, "");
+      addLog("system", "🏆 สรุปผลรอบที่ " + state.roundNumber, undefined, "🏆");
+
+      // Dealer result first
+      if (dealer?.result) {
+        const dealerHandType = PokDengGame.getHandTypeName(
+          dealer.result.handType
+        );
+        addLog(
+          "system",
+          `เจ้ามือ: ${dealer.result.points} แต้ม (${dealerHandType})`,
+          undefined,
+          "👑"
+        );
+      }
+
+      // Player results
+      let totalDealerWin = 0;
+      let totalDealerLose = 0;
+
+      state.players.forEach((p) => {
+        if (p.isDealer) return;
+
+        if (p.isFolded) {
+          addLog("result", `หมอบ เสีย ${p.bet}`, p.displayName, "🚩");
+          totalDealerWin += p.bet;
+        } else if (p.payout > 0) {
+          const handType = p.result
+            ? PokDengGame.getHandTypeName(p.result.handType)
+            : "";
+          addLog(
+            "result",
+            `ชนะ! +${p.payout} (${handType})`,
+            p.displayName,
+            "✅"
+          );
+          totalDealerLose += p.payout;
+        } else if (p.payout < 0) {
+          addLog("result", `แพ้ ${p.payout}`, p.displayName, "❌");
+          totalDealerWin += Math.abs(p.payout);
+        } else {
+          addLog("result", `เสมอ (ไม่เสียเงิน)`, p.displayName, "⚖️");
+        }
+      });
+
+      // Summary
+      const dealerNet = totalDealerWin - totalDealerLose;
+      if (dealerNet > 0) {
+        addLog("system", `เจ้ามือชนะรวม +${dealerNet}`, undefined, "💰");
+      } else if (dealerNet < 0) {
+        addLog("system", `เจ้ามือเสียรวม ${dealerNet}`, undefined, "💸");
+      } else {
+        addLog("system", `เจ้ามือเสมอ (ไม่ได้/เสีย)`, undefined, "⚖️");
+      }
+      addLog("system", "━━━━━━━━━━━━━━━━━━━━━━", undefined, "");
+      break;
+
+    case "finished":
+      addLog("system", "🎊 จบเกม!", undefined, "🎊");
+      break;
+  }
+}
+
+/**
  * Game log entry
  */
 export interface GameLogEntry {
@@ -158,7 +279,15 @@ export const usePokDengStore = create<PokDengStore>((set, get) => ({
     const newState = game.getState();
     set({ gameState: newState });
 
+    const dealer = newState.players.find((p) => p.isDealer);
+    const playerCount = newState.players.length;
+
+    addLog("system", "━━━━━━━━━━━━━━━━━━━━━━", undefined, "");
     addLog("system", `🎮 เริ่มรอบที่ ${newState.roundNumber}`, undefined, "🎮");
+    addLog("system", `👥 ผู้เล่น ${playerCount} คน`, undefined, "👥");
+    if (dealer) {
+      addLog("system", `👑 เจ้ามือ: ${dealer.displayName}`, undefined, "👑");
+    }
     addLog("system", "💰 รอผู้เล่นเดิมพัน...", undefined, "💰");
 
     get()._broadcastGameState();
@@ -390,27 +519,13 @@ export const usePokDengStore = create<PokDengStore>((set, get) => ({
 
     if (success) {
       const newState = game.getState();
+      const prevPhase = gameState?.phase;
       set({ gameState: newState });
       addLog("action", logMessage, playerName, logIcon);
 
-      // Add phase change logs
-      if (newState.phase === "dealing") {
-        addLog("system", "🃏 กำลังแจกไพ่...", undefined, "🃏");
-      } else if (newState.phase === "playing") {
-        addLog("system", "🎮 เลือกจั่วหรือพอ...", undefined, "🎮");
-      } else if (newState.phase === "revealing") {
-        addLog("system", "👁️ เปิดไพ่!", undefined, "👁️");
-      } else if (newState.phase === "settling") {
-        addLog("system", "🏆 สรุปผลรอบ", undefined, "🏆");
-        // Log results
-        newState.players.forEach((p) => {
-          if (p.payout !== 0) {
-            const resultIcon = p.payout > 0 ? "✅" : "❌";
-            const resultText =
-              p.payout > 0 ? `ชนะ +${p.payout}` : `แพ้ ${p.payout}`;
-            addLog("result", resultText, p.displayName, resultIcon);
-          }
-        });
+      // Add detailed phase change logs
+      if (prevPhase !== newState.phase) {
+        _logPhaseChange(newState, addLog);
       }
 
       get()._broadcastGameState();
