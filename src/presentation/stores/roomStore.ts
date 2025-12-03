@@ -57,15 +57,15 @@ interface RoomActions {
 type RoomStore = RoomStoreState & RoomActions;
 
 /**
- * Generate a short room ID
+ * Generate a random room code (excludes ambiguous chars: I, O, 0, 1)
  */
 function generateRoomId(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
   for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return result;
+  return code;
 }
 
 /**
@@ -127,10 +127,17 @@ export const useRoomStore = create<RoomStore>((set, get) => {
       set({ isCreating: true, error: null });
 
       try {
-        // Initialize peer if not already
+        // Generate room ID first (this will also be the host's peer ID)
+        const roomId = generateRoomId();
+
+        // Initialize peer with roomId as the peer ID
         let peerId = peerStore.peerId;
-        if (!peerId) {
-          peerId = await peerStore.initialize();
+        if (!peerId || peerId !== roomId) {
+          // Destroy existing peer if different
+          if (peerId) {
+            peerStore.destroy();
+          }
+          peerId = await peerStore.initialize(roomId);
         }
 
         const currentPlayer = getCurrentPlayer(true);
@@ -139,7 +146,6 @@ export const useRoomStore = create<RoomStore>((set, get) => {
         }
 
         const config = GAME_CONFIG_MAP[gameType];
-        const roomId = generateRoomId();
 
         const room: RoomState = {
           roomId,
@@ -182,7 +188,7 @@ export const useRoomStore = create<RoomStore>((set, get) => {
           isCreating: false,
         });
 
-        return peerId; // Return host peer ID for sharing
+        return roomId; // Return room ID for sharing (same as host peer ID)
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Failed to create room";
