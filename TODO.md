@@ -246,15 +246,33 @@ card-game-p2p-nextjs/
   - [x] Round result summary modal
   - [x] Detailed game logs
 
-### 🔄 In Progress: Kang (ไพ่แคง)
+### ✅ Completed - Kang (ไพ่แคง)
 
-1. [ ] Create Kang game types (`kang.types.ts`)
-2. [ ] Create Kang game rules/logic (`KangGame.ts`)
-3. [ ] Create Kang store (`kangStore.ts`)
-4. [ ] Create Kang UI components (`KangView.tsx`, `KangTableV2.tsx`)
-5. [ ] Create Kang page route (`/games/kang`)
-6. [ ] P2P game state synchronization
-7. [ ] Testing & bug fixes
+- [x] Create Kang game types (`kang.types.ts`)
+- [x] Create Kang game rules/logic (`KangGame.ts`)
+- [x] Create Kang store (`kangStore.ts`)
+- [x] Create Kang UI components (`KangView.tsx`, `KangTableV2.tsx`)
+- [x] Create Kang page route (`/games/kang`)
+- [x] P2P game state synchronization
+- [x] Short room code (6 chars) for sharing
+
+### ✅ Completed - Blackjack (แบล็คแจ็ค)
+
+- [x] Create Blackjack game types (`blackjack.types.ts`)
+- [x] Create Blackjack game rules/logic (`BlackjackGame.ts`)
+- [x] Create Blackjack store (`blackjackStore.ts`)
+- [x] Create Blackjack UI components (`BlackjackView.tsx`, `BlackjackTableV2.tsx`)
+- [x] Create Blackjack page route (`/games/blackjack`)
+- [x] P2P game state synchronization
+- [x] Hit, Stand, Double, Split, Surrender actions
+
+### 🔜 Next: Poker / Dummy / Slave
+
+เกมต่อไปที่สามารถทำได้:
+
+- **โป๊กเกอร์** (Texas Hold'em) - ยาก
+- **ดัมมี่** - ปานกลาง
+- **สลาฟ** - ง่าย
 
 ---
 
