@@ -34,14 +34,14 @@
 | Landing    | `/`                           | หน้าแรก แนะนำเว็บ      | ✅     |
 | Games Hub  | `/games`                      | หน้ารวมเกมทั้งหมด      | ✅     |
 | Profile    | `/profile`                    | โปรไฟล์ผู้เล่น (local) | ✅     |
-| Pok Deng   | `/games/pokdeng`              | ไพ่ป๊อกเดง             | 🔄     |
-| Kang       | `/games/kang`                 | ไพ่แคง                 | ⏳     |
+| Pok Deng   | `/games/pokdeng`              | ไพ่ป๊อกเดง             | ✅     |
+| Kang       | `/games/kang`                 | ไพ่แคง                 | 🔄     |
 | Blackjack  | `/games/blackjack`            | แบล็คแจ็ค              | ⏳     |
 | Poker      | `/games/poker`                | โปกเกอร์               | ⏳     |
 | Thai Dummy | `/games/dummy`                | ไทยดัมมี่              | ⏳     |
 | Slave Game | `/games/slave`                | ไพ่สลาฟ                | ⏳     |
-| Game Lobby | `/games/[game]/lobby`         | ห้องรอเล่น (reusable)  | 🔄     |
-| Game Room  | `/games/[game]/room/[roomId]` | ห้องเล่นเกม (reusable) | 🔄     |
+| Game Lobby | `/games/[game]/lobby`         | ห้องรอเล่น (reusable)  | ✅     |
+| Game Room  | `/games/[game]/room/[roomId]` | ห้องเล่นเกม (reusable) | ✅     |
 
 ### 🎮 Card Games List (Priority Order)
 
@@ -221,9 +221,9 @@ card-game-p2p-nextjs/
 
 ---
 
-## Current Sprint: P2P Engine ✅
+## Current Sprint: Card Games Development
 
-### ✅ Completed
+### ✅ Completed - Pok Deng (ป๊อกเดง)
 
 - [x] Task 1: MainLayout + Theme Toggle
 - [x] Task 2: User System (Zustand + localforage)
@@ -233,21 +233,28 @@ card-game-p2p-nextjs/
   - [x] PeerService wrapper (`PeerService.ts`)
   - [x] peerStore (connection management)
   - [x] roomStore (lobby/room management)
-  - [x] Reusable GameLobby component
-  - [x] Pok Deng game page with lobby
+  - [x] Reusable GameLobby component (GameLobbyV2)
+- [x] Task 5: Pok Deng Game
+  - [x] Card deck logic (`CardDeck.ts`)
+  - [x] Pok Deng game rules/logic (`PokDengGame.ts`)
+  - [x] Card UI component (`PlayingCard.tsx`)
+  - [x] Game table UI (`PokDengTableV2.tsx`)
+  - [x] Pok Deng store (`pokdengStore.ts`)
+  - [x] P2P game state synchronization
+  - [x] Current action instruction banner
+  - [x] Game action history log
+  - [x] Round result summary modal
+  - [x] Detailed game logs
 
-### 🔄 In Progress: First Game Logic (Pok Deng)
+### 🔄 In Progress: Kang (ไพ่แคง)
 
-1. [x] Create card deck logic (`CardDeck.ts`)
-2. [x] Create Pok Deng game rules/logic (`PokDengGame.ts`)
-3. [x] Create card UI component (`PlayingCard.tsx`)
-4. [x] Create game table UI (`PokDengTable.tsx`)
-5. [x] Create Pok Deng store (`pokdengStore.ts`)
-6. [x] P2P game state synchronization
-7. [x] Current action instruction banner
-8. [x] Game action history log
-9. [ ] Testing & bug fixes
-10. [ ] Polish UI and animations
+1. [ ] Create Kang game types (`kang.types.ts`)
+2. [ ] Create Kang game rules/logic (`KangGame.ts`)
+3. [ ] Create Kang store (`kangStore.ts`)
+4. [ ] Create Kang UI components (`KangView.tsx`, `KangTableV2.tsx`)
+5. [ ] Create Kang page route (`/games/kang`)
+6. [ ] P2P game state synchronization
+7. [ ] Testing & bug fixes
 
 ---
 
