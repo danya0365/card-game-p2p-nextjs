@@ -743,10 +743,15 @@ export function SlaveTableV2() {
             <div>
               <h4 className="text-white font-bold mb-2">🃏 ลำดับไพ่</h4>
               <p>3 (ต่ำสุด) → 4 → 5 → ... → K → A → 2 (สูงสุด)</p>
+              <p className="mt-1 text-xs">
+                ถ้าเลขเท่ากัน: ♣ &lt; ♦ &lt; ♥ &lt; ♠
+              </p>
             </div>
             <div>
               <h4 className="text-white font-bold mb-2">🎮 วิธีเล่น</h4>
               <ul className="list-disc list-inside space-y-1">
+                <li>เกมแรก: คนมี 3♣ (ดอกจิก) เริ่มก่อน</li>
+                <li>เกมถัดไป: ทาสจากรอบก่อนเริ่มก่อน</li>
                 <li>ทิ้งไพ่แบบเดี่ยว คู่ ตอง หรือ 4 ใบ</li>
                 <li>คนถัดไปต้องทิ้งไพ่ประเภทเดียวกันที่สูงกว่า</li>
                 <li>ถ้าทิ้งไม่ได้หรือไม่อยากทิ้ง กด ผ่าน</li>
@@ -754,7 +759,14 @@ export function SlaveTableV2() {
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-bold mb-2">👑 ตำแหน่ง</h4>
+              <h4 className="text-white font-bold mb-2">� กฎพิเศษ</h4>
+              <ul className="list-disc list-inside space-y-1">
+                <li>ไพ่ตอง (3 ใบ) ลงทับไพ่เดี่ยวได้เลย</li>
+                <li>ไพ่ 4 ใบ (ระเบิด) ลงทับไพ่เดี่ยวหรือคู่ได้เลย</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-2">�👑 ตำแหน่ง</h4>
               <ul className="list-disc list-inside space-y-1">
                 <li>หมดก่อน = ประธานาธิบดี 👑</li>
                 <li>หมดทีหลังสุด = ทาส 😢</li>

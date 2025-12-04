@@ -114,6 +114,18 @@ export const SLAVE_CARD_VALUES: Record<number, number> = {
 };
 
 /**
+ * Suit value for Slave (when comparing same rank)
+ * ♣ ดอกจิก (Clubs) = lowest
+ * ♠ โพดำ (Spades) = highest
+ */
+export const SLAVE_SUIT_VALUES: Record<string, number> = {
+  clubs: 1, // ♣ ดอกจิก - ต่ำสุด
+  diamonds: 2, // ♦ ข้าวหลามตัด
+  hearts: 3, // ♥ โพแดง
+  spades: 4, // ♠ โพดำ - สูงสุด
+};
+
+/**
  * Rank names in Thai
  */
 export const SLAVE_RANK_NAMES: Record<SlaveRank, string> = {

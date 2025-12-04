@@ -13,6 +13,7 @@ import type {
 import {
   SLAVE_CARD_VALUES,
   SLAVE_RANK_NAMES,
+  SLAVE_SUIT_VALUES,
 } from "@/src/domain/types/slave.types";
 import { CardDeck } from "./CardDeck";
 
@@ -111,7 +112,7 @@ export class SlaveGame {
     // Deal all cards
     this.dealCards();
 
-    // Find player with 3 of Spades to start
+    // Find starting player (3♣ for first game, Slave for subsequent)
     this.findStartingPlayer();
 
     this.state.phase = "playing";
@@ -141,25 +142,37 @@ export class SlaveGame {
   }
 
   /**
-   * Find player with 3 of Spades (or lowest card)
+   * Find player with 3 of Clubs (lowest card) to start
    */
   private findStartingPlayer(): void {
-    // First game: player with 3 of Spades starts
+    // First game: player with 3 of Clubs (ดอกจิก) starts
     if (this.state.gameNumber === 1) {
       for (let i = 0; i < this.state.players.length; i++) {
-        const has3Spades = this.state.players[i].hand.some(
-          (c) => c.rank === 3 && c.suit === "spades"
+        const has3Clubs = this.state.players[i].hand.some(
+          (c) => c.rank === 3 && c.suit === "clubs"
         );
-        if (has3Spades) {
+        if (has3Clubs) {
           this.state.currentPlayerIndex = i;
           this.state.roundStarterIndex = i;
           return;
         }
       }
+    } else {
+      // Subsequent games: previous Slave starts
+      const slavePlayer = this.state.players.find((p) => p.rank === "slave");
+      if (slavePlayer) {
+        const slaveIndex = this.state.players.findIndex(
+          (p) => p.oderId === slavePlayer.oderId
+        );
+        if (slaveIndex !== -1) {
+          this.state.currentPlayerIndex = slaveIndex;
+          this.state.roundStarterIndex = slaveIndex;
+          return;
+        }
+      }
     }
 
-    // Subsequent games: previous slave starts
-    // For simplicity, just use first player
+    // Fallback: first player
     this.state.currentPlayerIndex = 0;
     this.state.roundStarterIndex = 0;
   }
@@ -185,13 +198,33 @@ export class SlaveGame {
 
     // Check if play beats current play
     if (this.state.currentPlay) {
-      // Must match play type (or bomb)
-      if (playType !== this.state.currentPlay.playType) {
-        // Bomb (4 of a kind) can beat anything
-        if (playType !== "quadruple") return false;
+      const currentType = this.state.currentPlay.playType;
+      const currentValue = this.state.currentPlay.value;
+
+      // Check valid play combinations
+      if (playType !== currentType) {
+        // Triple can beat single
+        if (playType === "triple" && currentType === "single") {
+          // Triple always wins against single (no value check needed)
+        }
+        // Quadruple (bomb) can beat single or pair
+        else if (
+          playType === "quadruple" &&
+          (currentType === "single" || currentType === "pair")
+        ) {
+          // Quadruple always wins against single or pair
+        }
+        // Quadruple can beat quadruple with higher value
+        else if (playType === "quadruple" && currentType === "quadruple") {
+          if (playValue <= currentValue) return false;
+        }
+        // Other type mismatches are invalid
+        else {
+          return false;
+        }
       } else {
         // Same type must have higher value
-        if (playValue <= this.state.currentPlay.value) return false;
+        if (playValue <= currentValue) return false;
       }
     }
 
@@ -362,20 +395,21 @@ export class SlaveGame {
     const length = cards.length;
     if (length === 0) return null;
 
-    const values = cards.map((c) => this.getCardValue(c));
-    const uniqueValues = new Set(values);
+    // Use rank values only for determining play type
+    const rankValues = cards.map((c) => this.getRankValue(c));
+    const uniqueRanks = new Set(rankValues);
 
     if (length === 1) return "single";
 
-    if (length === 2 && uniqueValues.size === 1) return "pair";
+    if (length === 2 && uniqueRanks.size === 1) return "pair";
 
-    if (length === 3 && uniqueValues.size === 1) return "triple";
+    if (length === 3 && uniqueRanks.size === 1) return "triple";
 
-    if (length === 4 && uniqueValues.size === 1) return "quadruple";
+    if (length === 4 && uniqueRanks.size === 1) return "quadruple";
 
     // Check for straight (3+ consecutive singles)
-    if (length >= 3 && uniqueValues.size === length) {
-      const sorted = [...values].sort((a, b) => a - b);
+    if (length >= 3 && uniqueRanks.size === length) {
+      const sorted = [...rankValues].sort((a, b) => a - b);
       let isConsecutive = true;
       for (let i = 1; i < sorted.length; i++) {
         if (sorted[i] - sorted[i - 1] !== 1) {
@@ -383,8 +417,8 @@ export class SlaveGame {
           break;
         }
       }
-      // Don't allow 2 in straight
-      if (isConsecutive && !values.includes(13)) return "straight";
+      // Don't allow 2 in straight (rank value 13)
+      if (isConsecutive && !rankValues.includes(13)) return "straight";
     }
 
     return null;
@@ -399,8 +433,19 @@ export class SlaveGame {
 
   /**
    * Get card value for Slave (2 is highest)
+   * Combines rank and suit: rank * 10 + suit
+   * This ensures 5♠ > 5♥ > 5♦ > 5♣
    */
   private getCardValue(card: Card): number {
+    const rankValue = SLAVE_CARD_VALUES[card.rank] || 0;
+    const suitValue = SLAVE_SUIT_VALUES[card.suit] || 0;
+    return rankValue * 10 + suitValue;
+  }
+
+  /**
+   * Get rank-only value (for grouping same rank cards)
+   */
+  private getRankValue(card: Card): number {
     return SLAVE_CARD_VALUES[card.rank] || 0;
   }
 
@@ -434,13 +479,18 @@ export class SlaveGame {
 
     // Must beat current play
     if (currentType === "single") {
+      // Higher singles
       hand
         .filter((c) => this.getCardValue(c) > currentValue)
         .forEach((c) => playable.push([c]));
+      // Triple can beat single (no value check needed)
+      this.findGroups(hand, 3).forEach((g) => playable.push(g));
     } else if (currentType === "pair") {
+      // Higher pairs
       this.findGroups(hand, 2)
         .filter((g) => this.getPlayValue(g) > currentValue)
         .forEach((g) => playable.push(g));
+      // Quadruple can beat pair (added below in bomb section)
     } else if (currentType === "triple") {
       this.findGroups(hand, 3)
         .filter((g) => this.getPlayValue(g) > currentValue)
@@ -456,30 +506,32 @@ export class SlaveGame {
         .forEach((s) => playable.push(s));
     }
 
-    // Bomb (4 of a kind) can always be played
-    if (currentType !== "quadruple") {
+    // Quadruple (bomb) can beat single or pair
+    if (currentType === "single" || currentType === "pair") {
       this.findGroups(hand, 4).forEach((g) => playable.push(g));
     }
+    // Quadruple can beat quadruple with higher value (handled above)
 
     return playable;
   }
 
   /**
-   * Find groups of same value cards
+   * Find groups of same rank cards (pairs, triples, quadruples)
    */
   private findGroups(hand: Card[], size: number): Card[][] {
     const groups: Card[][] = [];
-    const valueGroups = new Map<number, Card[]>();
+    const rankGroups = new Map<number, Card[]>();
 
+    // Group by rank only (not suit)
     hand.forEach((card) => {
-      const value = this.getCardValue(card);
-      if (!valueGroups.has(value)) {
-        valueGroups.set(value, []);
+      const rank = this.getRankValue(card);
+      if (!rankGroups.has(rank)) {
+        rankGroups.set(rank, []);
       }
-      valueGroups.get(value)!.push(card);
+      rankGroups.get(rank)!.push(card);
     });
 
-    valueGroups.forEach((cards) => {
+    rankGroups.forEach((cards) => {
       if (cards.length >= size) {
         // Get all combinations of 'size' cards
         const combos = this.getCombinations(cards, size);
