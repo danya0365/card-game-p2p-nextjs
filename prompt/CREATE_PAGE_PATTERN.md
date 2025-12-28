@@ -19,7 +19,7 @@ This template follows the established Clean Architecture pattern with:
 
 ```typescript
 import { [PageName]View } from "@/src/presentation/components/[page-name]/[PageName]View";
-import { [PageName]PresenterFactory } from "@/src/presentation/presenters/[page-name]/[PageName]Presenter";
+import { createServer[PageName]Presenter } from "@/src/presentation/presenters/[page-name]/[PageName]PresenterServerFactory";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -39,7 +39,7 @@ export async function generateMetadata({
   params,
 }: [PageName]PageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const presenter = await [PageName]PresenterFactory.createServer();
+  const presenter = await createServer[PageName]Presenter();
 
   try {
     return presenter.generateMetadata(resolvedParams.[paramName]);
@@ -60,7 +60,7 @@ export async function generateMetadata({
  */
 export default async function [PageName]Page({ params }: [PageName]PageProps) {
   const resolvedParams = await params;
-  const presenter = await [PageName]PresenterFactory.createServer();
+  const presenter = await createServer[PageName]Presenter();
 
   try {
     // Get view model from presenter
@@ -289,48 +289,30 @@ export class [PageName]Presenter {
    */
   async getStats() {
     try {
-      const user = await this.getUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
+}
 
-      const result = await this.supabase.from("[page-name]").select("*").order("createdAt", { ascending: false }).limit(perPage).offset((page - 1) * perPage);
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
+export async function createServer[PageName]Presenter(): Promise<[PageName]Presenter> {
+  return [PageName]PresenterServerFactory.create();
+}
+```
 
-  /**
-   * Get user
-   */
-  async getUser() {
-    try {
-      const user = await this.supabase.auth.getUser();
-      return user;
-    } catch (error) {
-      throw error;
-    }
+`src/presentation/presenters/[page-name]/[PageName]PresenterClientFactory.ts`
+
+```typescript
+"use client";
+
+import { createClientSupabaseClient } from "@/src/infrastructure/config/supabase-client-client";
+import { [PageName]Presenter } from "./[PageName]Presenter";
+
+export class [PageName]PresenterClientFactory {
+  static create(): [PageName]Presenter {
+    const supabase = createClientSupabaseClient();
+    return new [PageName]Presenter(supabase);
   }
 }
 
-/**
- * Factory for creating [PageName]Presenter instances
- */
-export class [PageName]PresenterFactory {
-  static async createServer(): Promise<[PageName]Presenter> {
-    const supabase = createServerSupabaseClient();
-    return new [PageName]Presenter(
-      supabase,
-    );
-  }
-
-  static createClient(): [PageName]Presenter {
-    const supabase = createClientSupabaseClient();
-    return new [PageName]Presenter(
-      supabase,
-    );
-  }
+export function createClient[PageName]Presenter(): [PageName]Presenter {
+  return [PageName]PresenterClientFactory.create();
 }
 ```
 
@@ -354,14 +336,13 @@ export class [PageName]PresenterFactory {
 
 import { useCallback, useEffect, useState } from "react";
 import { [PageName]ViewModel } from "./[PageName]Presenter";
-import { [PageName]PresenterFactory } from "./[PageName]Presenter";
+import { createClient[PageName]Presenter } from "./[PageName]PresenterClientFactory";
 import type { [PageItem] } from "./[PageName]Presenter";
 import type { Create[PageItem]Data } from "./[PageName]Presenter";
 import type { Update[PageItem]Data } from "./[PageName]Presenter";
 
 // Initialize presenter instance once (singleton pattern)
-// ไม่ต้อง await เพราะ createClient() return instance โดยตรง
-const presenter = [PageName]PresenterFactory.createClient();
+const presenter = createClient[PageName]Presenter();
 
 export interface [PageName]PresenterState {
   viewModel: [PageName]ViewModel | null;
@@ -588,13 +569,13 @@ export function use[PageName]Presenter(
 import { useCallback, useEffect, useState } from "react";
 import { useAuthStore } from "@/src/presentation/stores/authStore";
 import { [PageName]ViewModel } from "./[PageName]Presenter";
-import { [PageName]PresenterFactory } from "./[PageName]Presenter";
+import { createClient[PageName]Presenter } from "./[PageName]PresenterClientFactory";
 import type { [PageItem] } from "./[PageName]Presenter";
 import type { Create[PageItem]Data } from "./[PageName]Presenter";
 import type { Update[PageItem]Data } from "./[PageName]Presenter";
 
 // Initialize presenter instance once (singleton pattern)
-const presenter = [PageName]PresenterFactory.createClient();
+const presenter = createClient[PageName]Presenter();
 
 export interface [PageName]PresenterState {
   viewModel: [PageName]ViewModel | null;
@@ -1274,4 +1255,7 @@ Ensure comprehensive testing:
 ---
 
 This pattern ensures consistency across all backend pages while maintaining Clean Architecture principles and providing excellent user experience.
+
+```
+
 ```
